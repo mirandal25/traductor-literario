@@ -64,3 +64,5 @@ with col2:
         if not texto_usuario:
             st.toast("⚠️ Por favor escribe algo primero.")
         else
+           
+   
