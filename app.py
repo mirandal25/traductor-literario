@@ -2,9 +2,9 @@ import streamlit as st
 import google.generativeai as genai
 
 # --- CONFIGURACIÓN VISUAL ---
-st.set_page_config(page_title="Pluma Dorada | IA", page_icon="✒️", layout="wide")
+st.set_page_config(page_title="La Pluma de Oro | IA", page_icon="✒️", layout="wide")
 
-# Estilos CSS personalizados para que se vea profesional (fondo, botones)
+# Estilos CSS
 st.markdown("""
 <style>
     .stTextArea textarea {font-size: 16px !important;}
@@ -16,18 +16,21 @@ st.markdown("""
 # --- MOTOR DE IA (Auto-Detect) ---
 try:
     genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
+    
     def get_working_model():
         try:
-            # Priorizamos modelos rápidos y creativos
             modelos = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+            # Prioridad al modelo Flash (rápido y gratis)
             if "models/gemini-1.5-flash" in modelos: return "models/gemini-1.5-flash"
             if "models/gemini-1.5-flash-001" in modelos: return "models/gemini-1.5-flash-001"
             return modelos[0] if modelos else "models/gemini-pro"
-        except: return "models/gemini-pro"
+        except: 
+            return "models/gemini-pro"
 
-    model = genai.GenerativeModel(get_working_model())
+    nombre_modelo = get_working_model()
+    model = genai.GenerativeModel(nombre_modelo)
 except:
-    st.error("⚠️ Error de conexión. Revisa tus Secrets.")
+    st.error("⚠️ Error de conexión con Google. Revisa tus Secrets.")
     st.stop()
 
 # --- INTERFAZ ---
@@ -51,7 +54,7 @@ with col1:
     )
     
     st.markdown("---")
-    st.info("💡 **Tip Pro:** Las frases cortas funcionan mejor. Ej: *'Él la miró y sonrió'*.")
+    st.info("💡 **Tip:** Las frases cortas funcionan mejor. Ej: *'Él la miró y sonrió'*.")
 
 with col2:
     texto_usuario = st.text_area(
@@ -62,7 +65,35 @@ with col2:
 
     if st.button("✨ CONVERTIR EN LITERATURA", type="primary"):
         if not texto_usuario:
-            st.toast("⚠️ Por favor escribe algo primero.")
-        else
-           
-   
+            st.warning("⚠️ Por favor escribe algo primero.")
+        else:
+            # AQUÍ ESTABA EL ERROR, YA CORREGIDO CON LOS DOS PUNTOS:
+            with st.spinner('La IA está puliendo tu prosa...'):
+                try:
+                    prompt = f"""
+                    Actúa como un autor best-seller de {genero}. Tu objetivo es reescribir el siguiente texto plano para que sea digno de publicar en un libro físico.
+                    
+                    Texto original: "{texto_usuario}"
+                    
+                    Instrucciones:
+                    1. Tono: {tono}.
+                    2. Muestra, no cuentes (Show, don't tell). Usa metáforas sensoriales.
+                    3. Si es Romance Oscuro/Erótico, enfócate en la tensión física y psicológica.
+                    4. Genera EXACTAMENTE 3 opciones distintas:
+                       - Opción 1: Elegante y directa.
+                       - Opción 2: Poética y metafórica.
+                       - Opción 3: Intensa y emocional (la mejor para momentos climáticos).
+                    """
+                    
+                    response = model.generate_content(prompt)
+                    
+                    st.success("✅ Traducción completada")
+                    st.markdown("### 🖋️ Tus Opciones:")
+                    st.text_area("Copia tus resultados aquí:", value=response.text, height=400)
+                    
+                except Exception as e:
+                    st.error(f"Error técnico: {e}")
+
+# Pie de página
+st.markdown("---")
+st.markdown("<div style='text-align: center; color: grey;'>Herramienta exclusiva v2.1</div>", unsafe_allow_html=True)
