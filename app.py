@@ -1,67 +1,66 @@
 import streamlit as st
 import google.generativeai as genai
 
-# --- CONFIGURACIÓN DE PÁGINA ---
-st.set_page_config(page_title="La Pluma de Oro", page_icon="✒️", layout="centered")
-st.title("✒️ La Pluma de Oro")
-st.caption("Herramienta de Traducción Literaria con IA")
+# --- CONFIGURACIÓN VISUAL ---
+st.set_page_config(page_title="Pluma Dorada | IA", page_icon="✒️", layout="wide")
 
-# --- CONEXIÓN Y BUSCADOR DE MODELOS ---
+# Estilos CSS personalizados para que se vea profesional (fondo, botones)
+st.markdown("""
+<style>
+    .stTextArea textarea {font-size: 16px !important;}
+    .stButton button {width: 100%; border-radius: 5px; font-weight: bold;}
+    div[data-testid="stExpander"] {border: none; box-shadow: 0px 2px 5px rgba(0,0,0,0.1);}
+</style>
+""", unsafe_allow_html=True)
+
+# --- MOTOR DE IA (Auto-Detect) ---
 try:
     genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-    
-    # Esta función busca qué modelo tienes disponible automáticamente
     def get_working_model():
         try:
-            for m in genai.list_models():
-                if 'generateContent' in m.supported_generation_methods:
-                    if 'gemini' in m.name:
-                        return m.name
-            return "models/gemini-pro" # Respaldo
-        except:
-            return "models/gemini-pro"
+            # Priorizamos modelos rápidos y creativos
+            modelos = [m.name for m in genai.list_models() if 'generateContent' in m.supported_generation_methods]
+            if "models/gemini-1.5-flash" in modelos: return "models/gemini-1.5-flash"
+            if "models/gemini-1.5-flash-001" in modelos: return "models/gemini-1.5-flash-001"
+            return modelos[0] if modelos else "models/gemini-pro"
+        except: return "models/gemini-pro"
 
-    modelo_detectado = get_working_model()
-    # Mostramos qué cerebro encontró (para que sepas que funcionó)
-    st.sidebar.success(f"🟢 Conectado a: {modelo_detectado.replace('models/', '')}")
-    model = genai.GenerativeModel(modelo_detectado)
-
-except Exception as e:
-    st.error("⚠️ Error de Conexión. Revisa tu API Key en los Secrets.")
+    model = genai.GenerativeModel(get_working_model())
+except:
+    st.error("⚠️ Error de conexión. Revisa tus Secrets.")
     st.stop()
 
 # --- INTERFAZ ---
-with st.sidebar:
-    st.header("Configuración")
+col1, col2 = st.columns([1, 2])
+
+with col1:
+    st.image("https://cdn-icons-png.flaticon.com/512/2893/2893466.png", width=80)
+    st.title("Pluma de Oro")
+    st.caption("Tu editor literario personal.")
+    
+    st.markdown("---")
     genero = st.selectbox(
-        "Estilo Literario:",
-        ["Romance Oscuro", "Fantasía Épica", "Terror Psicológico", "Realismo Sucio", "Poesía Gótica"]
+        "📂 Género Literario:",
+        ["Romance Oscuro", "Erótico/Spicy", "Drama Psicológico", "Fantasía Épica", "Terror Lovecraftiano", "Poesía Trágica"]
     )
-    intensidad = st.slider("Nivel de Intensidad:", 1, 3, 3)
+    
+    tono = st.select_slider(
+        "🎚️ Nivel de Intensidad:",
+        options=["Sutil", "Moderado", "Intenso", "Visceral"],
+        value="Moderado"
+    )
+    
+    st.markdown("---")
+    st.info("💡 **Tip Pro:** Las frases cortas funcionan mejor. Ej: *'Él la miró y sonrió'*.")
 
-# --- ÁREA DE TRABAJO ---
-texto_usuario = st.text_area("Escribe tu frase aquí:", height=100, placeholder="Ej: Él entró a la habitación y la miró fijamente.")
+with col2:
+    texto_usuario = st.text_area(
+        "Escribe tu borrador o frase común aquí:", 
+        height=150, 
+        placeholder="Ejemplo: Ella sentía que él le estaba mintiendo, pero no quería decir nada para no arruinar el momento."
+    )
 
-if st.button("✨ Traducir Texto"):
-    if not texto_usuario:
-        st.warning("Escribe algo para traducir.")
-    else:
-        with st.spinner('Reescribiendo...'):
-            try:
-                prompt = f"""
-                Actúa como un escritor bestseller de {genero}.
-                Reescribe esta frase: "{texto_usuario}".
-                
-                Reglas:
-                1. Tono: {genero}.
-                2. Intensidad: {intensidad}/3.
-                3. Dame 3 variaciones distintas.
-                4. No expliques nada, solo dame las frases.
-                """
-                
-                response = model.generate_content(prompt)
-                st.markdown("### Resultados:")
-                st.markdown(response.text)
-                
-            except Exception as e:
-                st.error(f"Ocurrió un error: {e}")
+    if st.button("✨ CONVERTIR EN LITERATURA", type="primary"):
+        if not texto_usuario:
+            st.toast("⚠️ Por favor escribe algo primero.")
+        else
