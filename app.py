@@ -41,7 +41,10 @@ with col1:
     st.title("Pluma de Oro")
     st.caption("Tu editor literario personal.")
     
-    st.markdown("---")
+    st.markdown("---") # BOTÓN DE MONETIZACIÓN
+    st.markdown("### ☕ Apoya este proyecto")
+    st.write("¿Te ayudé a escribir tu escena? Ayúdame a mantener la IA activa.")
+    st.link_button("Invítame un Café ($3 USD)", "https://ko-fi.com/https://ko-fi.com/mirandal")
     genero = st.selectbox(
         "📂 Género Literario:",
         ["Romance Oscuro", "Erótico/Spicy", "Drama Psicológico", "Fantasía Épica", "Terror Lovecraftiano", "Poesía Trágica"]
