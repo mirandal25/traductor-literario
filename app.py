@@ -1,60 +1,67 @@
 import streamlit as st
 import google.generativeai as genai
 
-# Configuración de la página
-st.set_page_config(page_title="Traductor Literario IA", page_icon="✒️", layout="centered")
-
-# Título y Subtítulo
+# --- CONFIGURACIÓN DE PÁGINA ---
+st.set_page_config(page_title="La Pluma de Oro", page_icon="✒️", layout="centered")
 st.title("✒️ La Pluma de Oro")
-st.subheader("Transforma tus borradores en literatura de alto nivel")
+st.caption("Herramienta de Traducción Literaria con IA")
 
-# Configuración de la API (Se conecta con el secreto)
+# --- CONEXIÓN Y BUSCADOR DE MODELOS ---
 try:
     genai.configure(api_key=st.secrets["GOOGLE_API_KEY"])
-except:
-    st.error("Error: No se encontró la clave API. Configúrala en los secrets de Streamlit.")
+    
+    # Esta función busca qué modelo tienes disponible automáticamente
+    def get_working_model():
+        try:
+            for m in genai.list_models():
+                if 'generateContent' in m.supported_generation_methods:
+                    if 'gemini' in m.name:
+                        return m.name
+            return "models/gemini-pro" # Respaldo
+        except:
+            return "models/gemini-pro"
 
-# Menú lateral
+    modelo_detectado = get_working_model()
+    # Mostramos qué cerebro encontró (para que sepas que funcionó)
+    st.sidebar.success(f"🟢 Conectado a: {modelo_detectado.replace('models/', '')}")
+    model = genai.GenerativeModel(modelo_detectado)
+
+except Exception as e:
+    st.error("⚠️ Error de Conexión. Revisa tu API Key en los Secrets.")
+    st.stop()
+
+# --- INTERFAZ ---
 with st.sidebar:
     st.header("Configuración")
     genero = st.selectbox(
-        "Selecciona el Género Literario:",
-        ["Romance Oscuro", "Fantasía Épica", "Terror Lovecraftiano", "Novela Negra", "Poesía Melancólica", "Realismo Mágico"]
+        "Estilo Literario:",
+        ["Romance Oscuro", "Fantasía Épica", "Terror Psicológico", "Realismo Sucio", "Poesía Gótica"]
     )
-    intensidad = st.slider("Nivel de intensidad literaria:", 1, 3, 2)
-    st.info("💡 Consejo: Sé específico con tu frase original.")
+    intensidad = st.slider("Nivel de Intensidad:", 1, 3, 3)
 
-# Área de entrada
-texto_usuario = st.text_area("Escribe tu frase común aquí (ej: 'El entró al cuarto y la miró con odio'):", height=100)
+# --- ÁREA DE TRABAJO ---
+texto_usuario = st.text_area("Escribe tu frase aquí:", height=100, placeholder="Ej: Él entró a la habitación y la miró fijamente.")
 
-# Botón de acción
-if st.button("✨ Traducir a Literatura"):
+if st.button("✨ Traducir Texto"):
     if not texto_usuario:
-        st.warning("Por favor, escribe una frase primero.")
+        st.warning("Escribe algo para traducir.")
     else:
-        with st.spinner('La IA está reescribiendo tu texto...'):
+        with st.spinner('Reescribiendo...'):
             try:
-                # El Prompt maestro (La instrucción secreta)
-                model = genai.GenerativeModel('gemini-1.5-flash-001')
                 prompt = f"""
-                Actúa como un escritor bestseller experto en el género {genero}.
-                Tu tarea es reescribir la siguiente frase común: "{texto_usuario}".
+                Actúa como un escritor bestseller de {genero}.
+                Reescribe esta frase: "{texto_usuario}".
                 
                 Reglas:
-                1. Usa vocabulario avanzado y sensorial propio del {genero}.
-                2. Nivel de intensidad: {intensidad}/3.
-                3. No des explicaciones, solo entrega 3 opciones diferentes de la frase reescrita.
-                4. Si el género es Romance Oscuro, enfócate en la tensión, la posesión y las emociones viscerales.
+                1. Tono: {genero}.
+                2. Intensidad: {intensidad}/3.
+                3. Dame 3 variaciones distintas.
+                4. No expliques nada, solo dame las frases.
                 """
                 
                 response = model.generate_content(prompt)
-                
-                st.success("Aquí tienes tus opciones:")
+                st.markdown("### Resultados:")
                 st.markdown(response.text)
                 
             except Exception as e:
                 st.error(f"Ocurrió un error: {e}")
-
-# Pie de página
-st.markdown("---")
-st.caption("Herramienta creada para escritores profesionales.")
