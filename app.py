@@ -35,7 +35,7 @@ if st.button("✨ Traducir a Literatura"):
         with st.spinner('La IA está reescribiendo tu texto...'):
             try:
                 # El Prompt maestro (La instrucción secreta)
-                model = genai.GenerativeModel('gemini-1.5-flash')
+                model = genai.GenerativeModel('gemini-1.5-flash-001')
                 prompt = f"""
                 Actúa como un escritor bestseller experto en el género {genero}.
                 Tu tarea es reescribir la siguiente frase común: "{texto_usuario}".
